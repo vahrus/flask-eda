@@ -1,4 +1,4 @@
-FROM FROM ghcr.io/docker-library/python:3.11-slim
+FROM ghcr.io/docker-library/python:3.11-slim
 
 WORKDIR /app
 
