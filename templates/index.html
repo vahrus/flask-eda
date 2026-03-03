@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>Анализ блюд по фото</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #061018;
+        --card: rgba(255, 255, 255, 0.08);
+        --card-strong: rgba(255, 255, 255, 0.12);
+        --border: rgba(255, 255, 255, 0.18);
+        --text: #e5e7eb;
+        --muted: rgba(229, 231, 235, 0.72);
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        --brand: #22c55e;
+        --brand2: #10b981;
+        --primary: #3b82f6;
+        --primary2: #2563eb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      /* Full-page themed background (food / healthy) */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+          radial-gradient(1100px 700px at 15% 10%, rgba(34, 197, 94, 0.22), transparent 60%),
+          radial-gradient(900px 650px at 85% 20%, rgba(59, 130, 246, 0.20), transparent 55%),
+          radial-gradient(700px 520px at 55% 90%, rgba(16, 185, 129, 0.18), transparent 60%),
+          url("https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=2000&q=70");
+        background-size: cover;
+        background-position: center;
+        filter: saturate(1.1) contrast(1.05);
+        transform: scale(1.02);
+      }
+
+      /* Readability overlay */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(
+          180deg,
+          rgba(6, 16, 24, 0.82) 0%,
+          rgba(6, 16, 24, 0.62) 45%,
+          rgba(6, 16, 24, 0.90) 100%
+        );
+      }
+
+      .container {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 34px 16px 56px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 18px;
+        align-items: stretch;
+        margin-bottom: 18px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, var(--card-strong), var(--card));
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        padding: 26px 26px 28px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(0, 0, 0, 0.25);
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.2px;
+      }
+
+      h1 {
+        font-size: 34px;
+        line-height: 1.12;
+        margin: 12px 0 10px;
+        letter-spacing: -0.6px;
+      }
+
+      p.lead {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .benefits {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .benefit {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 16px;
+        padding: 12px 12px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .benefit strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+
+      form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+
+      input[type="file"] {
+        flex: 1 1 260px;
+        color: rgba(255, 255, 255, 0.92);
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(0, 0, 0, 0.22);
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.05s ease, box-shadow 0.05s ease,
+          background 0.15s ease;
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, var(--brand), var(--brand2));
+        color: #03120b;
+        box-shadow: 0 10px 22px rgba(34, 197, 94, 0.24);
+      }
+      button.primary:hover {
+        background: linear-gradient(135deg, #34d399, #22c55e);
+        transform: translateY(-1px);
+        box-shadow: 0 12px 26px rgba(34, 197, 94, 0.3);
+      }
+
+      button.secondary {
+        background: linear-gradient(135deg, var(--primary), var(--primary2));
+        color: #eff6ff;
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+      }
+      button.secondary:hover {
+        background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        transform: translateY(-1px);
+      }
+
+      .section-title {
+        font-size: 18px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-title span {
+        font-size: 22px;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      pre {
+        background: rgba(0, 0, 0, 0.40);
+        color: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 16px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .hint {
+        font-size: 13px;
+        color: rgba(229, 231, 235, 0.62);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 12px;
+        color: rgba(229, 231, 235, 0.55);
+      }
+
+      @media (max-width: 640px) {
+        .card {
+          padding: 18px 16px 22px;
+        }
+        h1 {
+          font-size: 24px;
+        }
+        form {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+        .benefits {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="hero">
+        <div class="card">
+          <div class="pill">🥗 Здоровое питание • анализ по фото</div>
+          <h1>Узнайте состав, БЖУ и калорийность блюда за 1 минуту</h1>
+          <p class="lead">
+            Загрузите фото — получите понятный отчёт: что это за блюдо, из чего
+            сделано, как приготовлено, примерный вес порции и ориентировочную
+            пищевую ценность. Затем одним кликом попросите GigaChat придумать
+            новый рецепт на основе продуктов.
+          </p>
+
+          <form action="{{ url_for('analyze') }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required />
+            <button type="submit" class="primary">Получить анализ</button>
+          </form>
+          <p class="hint">Загружайте новые фото сколько угодно — форма всегда доступна.</p>
+
+          <div class="benefits">
+            <div class="benefit">
+              <strong>Понятный отчёт</strong>
+              Название, категория, ингредиенты, способ приготовления, аллергены, уверенность.
+            </div>
+            <div class="benefit">
+              <strong>Оценка БЖУ</strong>
+              Примерные белки/жиры/углеводы и калорийность по типичным рецептурам.
+            </div>
+            <div class="benefit">
+              <strong>Новый рецепт</strong>
+              Отправьте набор продуктов в GigaChat и получите свежую идею блюда.
+            </div>
+            <div class="benefit">
+              <strong>Без лишних шагов</strong>
+              Никаких регистраций: загрузка → анализ → рецепт (по желанию).
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <span>✨</span>
+            <strong>Как это помогает</strong>
+          </div>
+          <p class="lead">
+            Подходит для контроля питания, составления рациона, поиска аллергенов и
+            вдохновения для готовки из того, что уже есть дома.
+          </p>
+          <div class="benefits">
+            <div class="benefit">
+              <strong>Для спорта</strong>
+              Быстро оценить калории и БЖУ перед/после тренировки.
+            </div>
+            <div class="benefit">
+              <strong>Для семьи</strong>
+              Понять состав блюда и потенциальные аллергены.
+            </div>
+            <div class="benefit">
+              <strong>Для кухни</strong>
+              Придумать вариации рецептов из похожих ингредиентов.
+            </div>
+            <div class="benefit">
+              <strong>Для привычек</strong>
+              Легче держать баланс: белок/овощи/углеводы.
+            </div>
+          </div>
+          <p class="hint" style="margin-top: 14px">
+            Совет: лучше всего работают фото при дневном свете и крупным планом.
+          </p>
+        </div>
+      </div>
+
+      {% if analysis %}
+      <div class="card">
+        <div class="section-title">
+          <span>📊</span>
+          <strong>Результат анализа OpenAI</strong>
+        </div>
+        <pre>{{ analysis }}</pre>
+
+        <form action="{{ url_for('gigachat') }}" method="post" class="actions-row">
+          <textarea name="analysis_text" style="display: none">{{ analysis }}</textarea>
+          <button type="submit" class="secondary">
+            Придумать новый рецепт (GigaChat)
+          </button>
+          <span class="hint">
+            В GigaChat передаётся текст анализа (включая набор продуктов).
+          </span>
+        </form>
+      </div>
+      {% endif %}
+
+      {% if recipe %}
+      <div class="card">
+        <div class="section-title">
+          <span>🍽️</span>
+          <strong>Рецепт нового блюда (GigaChat)</strong>
+        </div>
+        <pre>{{ recipe }}</pre>
+      </div>
+      {% endif %}
+
+      <div class="footer">
+        Результаты приблизительные и зависят от качества фото и типичных рецептур.
+      </div>
+    </div>
+  </body>
+  </html>
+
